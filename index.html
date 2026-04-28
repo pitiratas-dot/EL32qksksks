@@ -68,10 +68,8 @@ h1,h2,h3,h4,h5{font-family:'Nunito',sans-serif}
 .arr.p{left:16px} .arr.n{right:16px}
 .pager{ position:fixed;top:24px;right:24px; font-family:'Nunito',sans-serif;font-size:14px; font-weight:800;color:var(--text-gray);z-index:300; background: rgba(255,255,255,0.95); padding: 8px 16px; border-radius: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); border: 1px solid rgba(230,225,220,0.8); }
 
-/* ─── SAFE ZONES LAYOUT (หลบปุ่มซ้ายขวา และจุดด้านล่าง) ─── */
-/* บังคับซ้ายขวา 80px บน 40px */
+/* ─── SAFE ZONES LAYOUT ─── */
 .sh { display: flex; flex-direction: column; align-items: flex-start; padding: 40px 80px 0; position: relative; z-index: 1; flex-shrink: 0; }
-/* บังคับล่าง 80px เพื่อหลบจุดไข่ปลา */
 .sb { flex: 1 1 auto; padding: 16px 80px 80px; position: relative; z-index: 1; display: flex; flex-direction: column; justify-content: center; min-height: 0; }
 
 .tag { display: inline-flex; align-items: center; gap: 8px; background: white; border-radius: 30px; padding: 6px 16px; font-family:'Nunito',sans-serif;font-size: 12px;font-weight:900; color:var(--text-gray);text-transform:uppercase;letter-spacing:1.5px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); border: 1px solid rgba(230,225,220,0.8); margin-bottom: 12px; }
@@ -153,7 +151,7 @@ S4 — MARKET
 .st-lbl { font-size: 14px; color: var(--text-gray); font-weight: 700; line-height: 1.3;}
 
 /* ═══════════════════════════════
-S5 — COMPETITIVE (FIXED HEIGHT / ALIGNMENT)
+S5 — COMPETITIVE
 ═══════════════════════════════ */
 #s5 .sb { justify-content: center; }
 #s5 .card { flex: 0 1 auto; margin: auto 0; max-width: 1000px; padding: 0; overflow-x: auto; border: 1px solid rgba(0,0,0,0.05); } 
@@ -167,7 +165,7 @@ S5 — COMPETITIVE (FIXED HEIGHT / ALIGNMENT)
 .ck { color: white; background: var(--green-main); width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 14px; font-weight: bold; box-shadow: 0 4px 12px rgba(52,168,83,0.3); margin: 0 auto;}
 
 /* ═══════════════════════════════
-S6 — BUSINESS MODEL
+S6 — BUSINESS MODEL (ADJUSTED FOR PADDING)
 ═══════════════════════════════ */
 .pricing-highlight { background: linear-gradient(135deg, var(--yellow-main), #FFB300); border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 12px 32px rgba(255, 207, 35, 0.3); border: 1px solid rgba(255,255,255,0.4); flex-shrink: 0;}
 .ph-title { font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.8; margin-bottom: 4px;}
@@ -180,8 +178,11 @@ S6 — BUSINESS MODEL
 .b-text h3 { font-size: 11px; color: var(--text-gray); text-transform: uppercase; letter-spacing: 1px; font-weight: 900; margin-bottom: 4px; }
 .b-text p { font-family: 'Nunito', sans-serif; font-size: 20px; font-weight: 900; color: var(--text-dark); line-height: 1.2;}
 
-.d2c-card { background: var(--yellow-main); border-radius: 20px; padding: 20px; display: flex; flex-direction: column; text-align: center; justify-content: center; flex: 1; box-shadow: 0 12px 24px rgba(255, 207, 35, 0.3); border: 1px solid rgba(255,255,255,0.4); color: var(--text-dark);}
-.b2b-card { background: #1C3F60; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; text-align: center; justify-content: center; flex: 1; box-shadow: 0 12px 24px rgba(28, 63, 96, 0.3); border: 1px solid rgba(255,255,255,0.1); color: white;}
+/* ปรับ Padding ด้านใน เพื่อไม่ให้ตัวหนังสือกับไอคอนล้นกรอบ */
+.d2c-card { background: var(--yellow-main); border-radius: 20px; padding: 16px; display: flex; flex-direction: column; text-align: center; justify-content: center; flex: 1; box-shadow: 0 12px 24px rgba(255, 207, 35, 0.3); border: 1px solid rgba(255,255,255,0.4); color: var(--text-dark);}
+.b2b-card { background: #1C3F60; border-radius: 20px; padding: 16px; display: flex; flex-direction: column; text-align: center; justify-content: center; flex: 1; box-shadow: 0 12px 24px rgba(28, 63, 96, 0.3); border: 1px solid rgba(255,255,255,0.1); color: white;}
+/* ปรับไอคอนให้เล็กลงนิดนึงในหน้านี้ */
+.d2c-card .icon-wrap.lg, .b2b-card .icon-wrap.lg { width: 36px; height: 36px; font-size: 20px;}
 
 /* ═══════════════════════════════
 S7 — TRACTION
@@ -191,21 +192,23 @@ S7 — TRACTION
 .traction-list-wrapper { background: linear-gradient(180deg, #FFFFFF 0%, #F5F9F6 100%); border-radius: 24px; padding: 32px; border: 1px solid #E0EEDD; box-shadow: var(--sh-soft); display: flex; flex-direction: column; gap: 20px; justify-content: center; }
 
 /* ═══════════════════════════════
-S8 — ROADMAP (FORCED HORIZONTAL + SCROLL)
+S8 — ROADMAP (ADJUSTED FOR MORE SPACING)
 ═══════════════════════════════ */
-.timeline-wrap { width: 100%; height: 100%; display: flex; align-items: center; overflow-x: auto; padding-bottom: 16px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+/* เพิ่ม margin-top เพื่อทิ้งระยะห่างจากหัวข้อ */
+.timeline-wrap { width: 100%; height: 100%; display: flex; align-items: center; overflow-x: auto; padding-bottom: 16px; padding-top: 16px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 .timeline-wrap::-webkit-scrollbar { display: none; }
-.timeline-grid { display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: 1fr auto 1fr; gap: 20px; width: 100%; min-width: 900px; height: 100%; max-height: 400px; align-items: stretch; position: relative; z-index: 1;}
-.t-line-row { grid-column: 1 / -1; grid-row: 2; position: relative; height: 30px; display: flex; justify-content: space-between; align-items: center;}
+/* ปรับตารางให้บางลง (max-height) เพื่อเหลือพื้นที่ให้หัวข้อ */
+.timeline-grid { display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: 1fr auto 1fr; gap: 16px; width: 100%; min-width: 900px; height: 100%; max-height: 340px; align-items: stretch; position: relative; z-index: 1;}
+.t-line-row { grid-column: 1 / -1; grid-row: 2; position: relative; height: 24px; display: flex; justify-content: space-between; align-items: center;}
 .t-continuous-line { position: absolute; left: 5%; right: 5%; height: 6px; background: linear-gradient(90deg, var(--yellow-main), var(--orange-main), var(--blue-main)); z-index: 0; opacity: 0.4; border-radius: 3px;}
-.t-dot { width: 24px; height: 24px; border-radius: 50%; background: white; border: 6px solid; z-index: 1; position: relative; margin: 0 auto; box-shadow: 0 4px 8px rgba(0,0,0,0.1);}
+.t-dot { width: 20px; height: 20px; border-radius: 50%; background: white; border: 5px solid; z-index: 1; position: relative; margin: 0 auto; box-shadow: 0 4px 8px rgba(0,0,0,0.1);}
 
-.rm-card { background: white; border-radius: 20px; padding: 20px; box-shadow: var(--sh-soft); display: flex; flex-direction: column; justify-content: center; border-top: 6px solid; border-left: 1px solid rgba(0,0,0,0.03); border-right: 1px solid rgba(0,0,0,0.03); border-bottom: 1px solid rgba(0,0,0,0.03); min-height: 0; transition: transform 0.3s;}
+.rm-card { background: white; border-radius: 20px; padding: 16px; box-shadow: var(--sh-soft); display: flex; flex-direction: column; justify-content: center; border-top: 6px solid; border-left: 1px solid rgba(0,0,0,0.03); border-right: 1px solid rgba(0,0,0,0.03); border-bottom: 1px solid rgba(0,0,0,0.03); min-height: 0; transition: transform 0.3s;}
 .rm-card:hover { transform: translateY(-4px); box-shadow: var(--sh-float); }
-.rm-yr { font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 900; color: var(--text-gray); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
-.rm-tit { font-family: 'Nunito', sans-serif; font-size: 18px; font-weight: 900; color: var(--text-dark); line-height: 1.2; margin-bottom: 8px;}
-.rm-desc { font-size: 13px; color: var(--text-gray); line-height: 1.4; font-weight: 600; margin-bottom: 12px;}
-.rm-budg { display: inline-flex; align-items: center; justify-content: center; background: #F5F2EB; padding: 6px 14px; border-radius: 8px; font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 900; color: var(--text-dark);}
+.rm-yr { font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 900; color: var(--text-gray); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
+.rm-tit { font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 900; color: var(--text-dark); line-height: 1.2; margin-bottom: 8px;}
+.rm-desc { font-size: 12px; color: var(--text-gray); line-height: 1.4; font-weight: 600; margin-bottom: 12px;}
+.rm-budg { display: inline-flex; align-items: center; justify-content: center; background: #F5F2EB; padding: 6px 14px; border-radius: 8px; font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 900; color: var(--text-dark);}
 
 /* ═══════════════════════════════
 S9 — FINANCIALS
@@ -223,7 +226,7 @@ S10 — THE ASK
 .a-val { font-family: 'Nunito', sans-serif; font-size: 64px; font-weight: 900; line-height: 1; margin: 12px 0; letter-spacing: -2px; color: var(--text-dark);}
 
 /* ═══════════════════════════════
-S11 — CLOSING (CENTERED PERFECTLY)
+S11 — CLOSING
 ═══════════════════════════════ */
 #s11, #s11 .sw { background-color: #2A241E !important; }
 #s11 .bg-mesh { display: none !important; }
@@ -241,14 +244,13 @@ S11 — CLOSING (CENTERED PERFECTLY)
 .c-item { display: flex; flex-direction: column; align-items: center; gap: 8px; font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 600; color: rgba(255,255,255,0.8); }
 
 /* ═══════════════════════════════
-   RESPONSIVE QUERIES (DYNAMIC COMPRESSION FOR HORIZONTAL TABLETS)
+   RESPONSIVE QUERIES
 ═══════════════════════════════ */
-/* บังคับหดช่องว่างและฟอนต์ถ้าจอแนวนอนแคบหรือเตี้ยเกินไป */
 @media (max-height: 850px) {
   .sh { padding-top: 32px; }
-  .sb { padding-bottom: 72px; padding-top: 12px; }
+  .sb { padding-bottom: 80px; padding-top: 12px; }
   .s-grid { gap: 16px; }
-  .card, .problem-card-wrapper, .stat-card, .rm-card, .feat-card, .b-card { padding: 16px; }
+  .card, .prob-card { padding: 16px; }
   .sh h2 { font-size: 32px; }
   .tag { margin-bottom: 8px; }
   .chart-title { margin-bottom: 8px; }
@@ -260,7 +262,6 @@ S11 — CLOSING (CENTERED PERFECTLY)
   .stats-grid { gap: 16px; }
 }
 
-/* รองรับมือถือแนวตั้งแบบสุดๆ */
 @media (max-width: 768px) {
   .sh { padding: 48px 24px 0; }
   .sb { padding: 24px 24px 100px; }
@@ -313,15 +314,15 @@ S11 — CLOSING (CENTERED PERFECTLY)
       <div class="s2-left-col">
         <div class="prob-card">
           <div class="prob-icon"><div class="icon-wrap lg"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 5c.67 0 1.35.09 2 .26 1.78-2 5.03-2.84 6.42-2.26 1.4.58-.42 7-.42 7 .57 1.07 1 2.24 1 3.44C21 17.9 16.97 21 12 21s-9-3.1-9-7.56c0-1.25.5-2.4 1-3.44 0 0-1.89-6.42-.5-7 1.39-.58 4.69.23 6.5 2.23A9.04 9.04 0 0 1 12 5Z"/><path d="M8 14v.5"/><path d="M16 14v.5"/><path d="M11.25 16.25h1.5L12 17l-.75-.75Z"/></svg></div></div>
-          <div class="prob-text"><strong>Hairballs</strong> constantly disrupt daily cat life.</div>
+          <div class="prob-text"><strong>Hairballs</strong> constantly disrupt daily cat life</div>
         </div>
         <div class="prob-card">
           <div class="prob-icon"><div class="icon-wrap lg"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M12 8v4"></path><path d="M10 10h4"></path></svg></div></div>
-          <div class="prob-text"><strong>Kidney damage</strong> builds silently over time.</div>
+          <div class="prob-text"><strong>Kidney damage</strong> builds silently over time</div>
         </div>
         <div class="prob-card">
           <div class="prob-icon"><div class="icon-wrap lg"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M5 22h14"></path><path d="M5 2h14"></path><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"></path><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"></path></svg></div></div>
-          <div class="prob-text">Owners only react <strong>after symptoms worsen.</strong></div>
+          <div class="prob-text">Owners only react <strong>after symptoms worsen</strong></div>
         </div>
       </div>
       <div class="s2-right-col">
@@ -330,7 +331,7 @@ S11 — CLOSING (CENTERED PERFECTLY)
           <div class="ccw"><canvas id="problemChart"></canvas></div>
         </div>
         <div class="cat-pic-card">
-          <div class="cat-overlay">Cat owners seek peace of mind.</div>
+          <div class="cat-overlay">Cat owners seek peace of mind</div>
         </div>
       </div>
     </div>
@@ -346,7 +347,7 @@ S11 — CLOSING (CENTERED PERFECTLY)
     <h2><span class="highlight">CoreGut: Daily Prevention</span></h2>
   </div>
   <div class="sb">
-    <div class="s-grid" style="grid-template-columns: 0.85fr 1.15fr;">
+    <div class="s-grid" style="grid-template-columns: 0.8fr 1.2fr; align-items: center;">
       
       <div class="product-wow">
         <div class="bottle-pedestal">
@@ -383,28 +384,28 @@ S11 — CLOSING (CENTERED PERFECTLY)
             <div class="feat-icon-wrap" style="background: var(--yellow-light); color: #B38600;"><div class="icon-wrap sm"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"></path><path d="m9 12 2 2 4-4"></path></svg></div></div>
             <div>
               <div class="fc-title">Proactive Health</div>
-              <div class="fc-desc">Daily gut support before problems start.</div>
+              <div class="fc-desc">Daily gut support before problems start</div>
             </div>
           </div>
           <div class="feat-card" style="border-color: var(--green-main);">
             <div class="feat-icon-wrap" style="background: var(--green-light); color: #2D8A46;"><div class="icon-wrap sm"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div></div>
             <div>
               <div class="fc-title">Phosphate Binder</div>
-              <div class="fc-desc">Safely binds harmful dietary phosphates.</div>
+              <div class="fc-desc">Safely binds harmful dietary phosphates</div>
             </div>
           </div>
           <div class="feat-card" style="border-color: var(--blue-main);">
             <div class="feat-icon-wrap" style="background: var(--blue-light); color: #228CBF;"><div class="icon-wrap sm"><svg class="svg-icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div></div>
             <div>
               <div class="fc-title">Smooth Digestion</div>
-              <div class="fc-desc">Improves and regulates bowel movements.</div>
+              <div class="fc-desc">Improves and regulates bowel movements</div>
             </div>
           </div>
           <div class="feat-card" style="border-color: var(--orange-main);">
             <div class="feat-icon-wrap" style="background: var(--orange-light); color: #C25633;"><div class="icon-wrap sm"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg></div></div>
             <div>
               <div class="fc-title">Hairball Relief</div>
-              <div class="fc-desc">Reduces natural hairball buildup safely.</div>
+              <div class="fc-desc">Reduces natural hairball buildup safely</div>
             </div>
           </div>
         </div>
@@ -530,13 +531,13 @@ S11 — CLOSING (CENTERED PERFECTLY)
           </div>
         </div>
         
-        <div style="display: flex; gap: 16px; flex: 1 1 auto; min-height: 0;">
+        <div style="display: flex; gap: 12px; flex: 1 1 auto; min-height: 0;">
           <div class="d2c-card">
-            <div class="icon-wrap lg" style="width: 48px; height: 48px; background: white; border-radius: 12px; color: #B38600; margin: 0 auto 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg></div>
+            <div class="icon-wrap lg" style="width: 36px; height: 36px; background: white; border-radius: 10px; color: #B38600; margin: 0 auto 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg></div>
             <h3 style="font-size: 11px; color: rgba(0,0,0,0.6); text-transform: uppercase; font-weight: 900;">D2C Channel</h3><p style="font-size: 18px; font-weight: 900;">Shopee</p>
           </div>
           <div class="b2b-card">
-            <div class="icon-wrap lg" style="width: 48px; height: 48px; background: rgba(255,255,255,0.15); border-radius: 12px; color: white; margin: 0 auto 8px;"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></div>
+            <div class="icon-wrap lg" style="width: 36px; height: 36px; background: rgba(255,255,255,0.15); border-radius: 10px; color: white; margin: 0 auto 8px;"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></div>
             <h3 style="font-size: 11px; color: rgba(255,255,255,0.6); text-transform: uppercase; font-weight: 900;">B2B Channel</h3><p style="font-size: 18px; font-weight: 900;">Vet Clinics</p>
           </div>
         </div>
@@ -573,10 +574,10 @@ S11 — CLOSING (CENTERED PERFECTLY)
       </div>
       <div class="traction-list-wrapper">
         <div style="display: flex; flex-direction: column; gap: 24px; justify-content: center;">
-          <div style="display: flex; align-items: center; gap: 16px;"><div class="icon-wrap" style="width: 48px; height: 48px; background: var(--green-main); border-radius: 50%; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(52,168,83,0.3);"><svg class="svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div class="sol-text"><strong style="color:var(--text-dark);">1,400 units</strong> sold in Year 1.</div></div>
-          <div style="display: flex; align-items: center; gap: 16px;"><div class="icon-wrap" style="width: 48px; height: 48px; background: var(--green-main); border-radius: 50%; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(52,168,83,0.3);"><svg class="svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div class="sol-text"><strong style="color:var(--text-dark);">300% volume growth</strong> Q1 to Q4.</div></div>
-          <div style="display: flex; align-items: center; gap: 16px;"><div class="icon-wrap" style="width: 48px; height: 48px; background: var(--green-main); border-radius: 50%; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(52,168,83,0.3);"><svg class="svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div class="sol-text">Trusted by local <strong style="color:var(--text-dark);">Vet Clinics</strong>.</div></div>
-          <div style="display: flex; align-items: center; gap: 16px;"><div class="icon-wrap" style="width: 48px; height: 48px; background: var(--green-main); border-radius: 50%; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(52,168,83,0.3);"><svg class="svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div class="sol-text">Viral <strong style="color:var(--text-dark);">Shark Tank</strong> national exposure.</div></div>
+          <div style="display: flex; align-items: center; gap: 16px;"><div class="icon-wrap" style="width: 48px; height: 48px; background: var(--green-main); border-radius: 50%; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(52,168,83,0.3);"><svg class="svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div class="sol-text"><strong style="color:var(--text-dark);">1,400 units</strong> sold in Year 1</div></div>
+          <div style="display: flex; align-items: center; gap: 16px;"><div class="icon-wrap" style="width: 48px; height: 48px; background: var(--green-main); border-radius: 50%; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(52,168,83,0.3);"><svg class="svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div class="sol-text"><strong style="color:var(--text-dark);">300% volume growth</strong> Q1 to Q4</div></div>
+          <div style="display: flex; align-items: center; gap: 16px;"><div class="icon-wrap" style="width: 48px; height: 48px; background: var(--green-main); border-radius: 50%; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(52,168,83,0.3);"><svg class="svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div class="sol-text">Trusted by local <strong style="color:var(--text-dark);">Vet Clinics</strong></div></div>
+          <div style="display: flex; align-items: center; gap: 16px;"><div class="icon-wrap" style="width: 48px; height: 48px; background: var(--green-main); border-radius: 50%; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(52,168,83,0.3);"><svg class="svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div class="sol-text">Viral <strong style="color:var(--text-dark);">Shark Tank</strong> national exposure</div></div>
         </div>
       </div>
     </div>
@@ -584,7 +585,7 @@ S11 — CLOSING (CENTERED PERFECTLY)
 </div>
 </div>
 
-<!-- ── S8 ROADMAP ── -->
+<!-- ── S8 ROADMAP (COMPACT VERTICAL SPACE) ── -->
 <div class="slide" id="s8">
 <div class="sw">
   <div class="sh">
@@ -606,35 +607,35 @@ S11 — CLOSING (CENTERED PERFECTLY)
         <div class="rm-card" style="grid-column: 1; grid-row: 1; align-self: end; border-top-color: var(--yellow-main);">
           <div class="rm-yr">Year 1</div>
           <div class="rm-tit">Foundation</div>
-          <div class="rm-desc">Scale production, launch <strong>online store</strong>.</div>
+          <div class="rm-desc">Scale production, launch <strong>online store</strong></div>
           <div><div class="rm-budg">800K THB</div></div>
         </div>
 
         <div class="rm-card" style="grid-column: 2; grid-row: 3; align-self: start; border-top-color: var(--orange-main);">
           <div class="rm-yr">Year 2</div>
           <div class="rm-tit">Expansion</div>
-          <div class="rm-desc">Develop and launch <strong>'CoreCalm'</strong>.</div>
+          <div class="rm-desc">Develop and launch <strong>'CoreCalm'</strong></div>
           <div><div class="rm-budg">1.2M THB</div></div>
         </div>
 
         <div class="rm-card" style="grid-column: 3; grid-row: 1; align-self: end; border-top-color: var(--yellow-main);">
           <div class="rm-yr">Year 3</div>
           <div class="rm-tit">Penetration</div>
-          <div class="rm-desc">Push into offline clinics.</div>
+          <div class="rm-desc">Push into offline clinics</div>
           <div><div class="rm-budg">500K THB</div></div>
         </div>
 
         <div class="rm-card" style="grid-column: 4; grid-row: 3; align-self: start; border-top-color: var(--blue-main);">
           <div class="rm-yr">Year 4</div>
           <div class="rm-tit">Brand Strength</div>
-          <div class="rm-desc">Major campaign & <strong>Subscription</strong>.</div>
+          <div class="rm-desc">Major campaign & <strong>Subscription</strong></div>
           <div><div class="rm-budg">600K THB</div></div>
         </div>
 
         <div class="rm-card" style="grid-column: 5; grid-row: 1; align-self: end; border-top-color: var(--green-main);">
           <div class="rm-yr">Year 5</div>
           <div class="rm-tit">Infrastructure</div>
-          <div class="rm-desc">Invest in <strong>own warehouse</strong>.</div>
+          <div class="rm-desc">Invest in <strong>own warehouse</strong></div>
           <div><div class="rm-budg">665K THB</div></div>
         </div>
       </div>
