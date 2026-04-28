@@ -1,0 +1,978 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Pawtique — CoreGut for Cats</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=DM+Sans:ital,wght@0,400;0,500;0,700&display=swap" rel="stylesheet">
+<!-- Chart.js & DataLabels Plugin -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+/* ─── RESET & VARS ─── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-main: #FBF9F6;
+  --yellow-main: #FFCF23;
+  --yellow-light: #FFF2BA;
+  --green-main: #34A853;
+  --green-light: #E0F2E4;
+  --orange-main: #FF8A65;
+  --orange-light: #FFE3D8;
+  --blue-main: #4FC3F7;
+  --blue-light: #E1F5FE;
+  
+  --text-dark: #2C2621;
+  --text-gray: #7A726A;
+  --text-light: #B0A9A3;
+  
+  --card-bg: rgba(255, 255, 255, 0.95);
+  --sh-soft: 0 8px 24px rgba(44, 38, 33, 0.04);
+  --sh-float: 0 20px 50px rgba(44, 38, 33, 0.1);
+  
+  --r-card: 24px;
+}
+html,body{width:100%;height:100%;overflow:hidden;
+  font-family:'DM Sans',sans-serif;background:#2C2621;color:var(--text-dark)}
+h1,h2,h3,h4,h5{font-family:'Nunito',sans-serif}
+
+/* ─── SCALED SVG ICON STYLES ─── */
+.svg-icon { width: 1em; height: 1em; display: inline-block; vertical-align: middle; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+.icon-wrap { display: flex; align-items: center; justify-content: center; font-size: clamp(28px, 4vmin, 40px); flex-shrink: 0;}
+.icon-wrap.sm { font-size: clamp(20px, 3vmin, 28px); }
+.icon-wrap.lg { font-size: clamp(36px, 5vmin, 52px); }
+
+/* ─── SLIDE ENGINE ─── */
+.deck{width:100vw;height:100vh;position:relative;overflow:hidden;background:var(--bg-main)}
+.slide{ position:absolute;inset:0;opacity:0;pointer-events:none; transition:opacity .4s ease, transform .4s ease; transform:translateY(20px) scale(0.98); }
+.slide.active{opacity:1;pointer-events:all;transform:translateY(0) scale(1)}
+.slide.exit{opacity:0;transform:translateY(-20px) scale(0.98)}
+.sw{ width:100%;height:100%; display:flex;flex-direction:column;position:relative; z-index: 1;}
+
+/* ─── BACKGROUND BLOBS ─── */
+.blob-container { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.blob { position: absolute; filter: blur(60px); opacity: 0.3; animation: float 15s ease-in-out infinite alternate; }
+.blob-1 { width: 50vw; height: 50vw; background: #FFCF23; top: -20%; right: -10%; }
+.blob-2 { width: 40vw; height: 40vw; background: #FFE3D8; bottom: -10%; left: -10%; animation-delay: -5s; }
+.blob-3 { width: 30vw; height: 30vw; background: #E1F5FE; top: 20%; left: 30%; opacity: 0.2; animation-delay: -10s; }
+@keyframes float { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(4%, -4%) scale(0.95); } }
+.pattern { position: absolute; inset: 0; background-image: radial-gradient(var(--text-light) 1px, transparent 1px); background-size: 30px 30px; opacity: 0.15; z-index: 0; pointer-events: none;}
+
+/* ─── NAVIGATION ─── */
+.nav-bar{ position:fixed;bottom:16px;left:50%;transform:translateX(-50%); display:flex;align-items:center;gap:8px;z-index:300; background:rgba(255,255,255,0.85);backdrop-filter:blur(10px); border-radius:40px;padding:10px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid rgba(255,255,255,0.6); }
+.nd{width:10px;height:10px;border-radius:50%;background:#D1CFCB; border:none;cursor:pointer;padding:0;transition:all .3s ease;}
+.nd.on{background:var(--yellow-main);width:28px;border-radius:8px}
+
+.arr{ position:fixed;top:50%;transform:translateY(-50%); background:var(--card-bg);border:none;cursor:pointer; width:50px;height:50px; border-radius:50%;display:flex;align-items:center;justify-content:center; color:var(--text-dark);font-size:22px;z-index:300; box-shadow: var(--sh-soft); transition: all .2s; border: 1px solid rgba(0,0,0,0.02); }
+.arr:hover{transform:translateY(-50%) scale(1.05); box-shadow: var(--sh-float); color: var(--yellow-main);}
+.arr.p{left:20px} .arr.n{right:20px}
+
+.pager{ position:fixed;top:20px;right:24px; font-family:'Nunito',sans-serif;font-size:14px; font-weight:800;color:var(--text-gray);z-index:300; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); padding: 6px 16px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+
+/* ─── LAYOUT & SAFE ZONES ─── */
+.sh { display: flex; flex-direction: column; align-items: flex-start; padding: clamp(24px, 4vh, 40px) clamp(80px, 8vw, 100px) 0; position: relative; z-index: 1; }
+.sb { flex: 1; min-height: 0; padding: clamp(16px, 2vh, 24px) clamp(80px, 8vw, 100px) clamp(60px, 8vh, 100px); position: relative; z-index: 1; display: flex; flex-direction: column; justify-content: center; }
+
+.tag { display: inline-flex; align-items: center; gap: 8px; background: white; border-radius: 30px; padding: 6px 16px; font-family:'Nunito',sans-serif;font-size:13px;font-weight:800; color:var(--text-gray);text-transform:uppercase;letter-spacing:1.5px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); border: 1px solid #F0EEEA; margin-bottom: 12px; }
+.tag::before { content: ''; display: block; width: 8px; height: 8px; background: var(--yellow-main); border-radius: 50%; }
+.sh h2 { font-size: clamp(28px, 4.5vmin, 44px); font-weight: 900; color: var(--text-dark); line-height: 1.2; position: relative; display: inline-block; margin-top: 0;}
+.highlight { position: relative; display: inline-block; z-index: 1; }
+.highlight::after { content: ''; position: absolute; left: -4px; right: -4px; bottom: 4px; height: 12px; background: var(--yellow-light); z-index: -1; border-radius: 4px; transform: rotate(-1deg); }
+
+.s-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(20px, 3vw, 32px); width: 100%; max-width: 1200px; margin: 0 auto; height: 100%; align-items: stretch;}
+.card { background: var(--card-bg); border-radius: var(--r-card); padding: clamp(20px, 3vmin, 32px); box-shadow: var(--sh-soft); display: flex; flex-direction: column; position: relative; border: 1px solid rgba(255,255,255,0.6); transition: transform 0.3s; flex: 1;}
+.card:hover { box-shadow: var(--sh-float); }
+.chart-title { font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;color:var(--text-gray);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px; }
+
+/* Critical for charts to render and fill space */
+.ccw { position: relative; flex: 1 1 auto; width: 100%; min-height: 120px; display: block; overflow: hidden;}
+.ccw canvas { position: absolute !important; inset: 0; width: 100% !important; height: 100% !important; }
+
+/* ═══════════════════════════════
+S1 — COVER (UPDATED TO 2026)
+═══════════════════════════════ */
+#s1 .sw { align-items: center; justify-content: center; text-align: center; }
+#s1 .blob-1 { background: var(--yellow-main); width: 60vw; height: 60vw; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.15;}
+#s1 .badge { background: white; border-radius: 50px; padding: 10px 24px; display: inline-flex; align-items: center; gap: 10px; font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 800; color: #B38600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 24px; box-shadow: 0 8px 20px rgba(255,207,35,0.2); border: 2px solid var(--yellow-main); }
+#s1 h1 { font-size: clamp(40px, 7vmin, 80px); font-weight: 900; color: var(--text-dark); line-height: 1.1; max-width: 900px; margin-bottom: 20px; position: relative; z-index: 2;}
+#s1 h1 span { color: var(--yellow-main); }
+#s1 .sub { font-size: clamp(16px, 2.5vmin, 22px); color: var(--text-gray); line-height: 1.5; font-weight: 500; max-width: 700px; margin: 0 auto; position: relative; z-index: 2;}
+#s1 .foot { display:flex;align-items:center;gap:20px; padding:16px 32px; background:white;border-radius:50px;box-shadow:var(--sh-soft); margin-top: 5vh; z-index: 2; position: relative;}
+#s1 .logo { font-family:'Nunito',sans-serif;font-size:24px;font-weight:900;}
+#s1 .logo span { color:var(--yellow-main)}
+
+/* ═══════════════════════════════
+S2 — PROBLEM (BALANCED & CUTE REAL CAT)
+═══════════════════════════════ */
+#s2 .s-grid { grid-template-columns: 1fr 1fr; max-width: 1200px; gap: 32px;}
+.problem-card-wrapper { background: white; border-radius: var(--r-card); padding: clamp(24px, 4vh, 32px); box-shadow: var(--sh-soft); border: 1px solid rgba(255,255,255,0.6); display: flex; flex-direction: column; justify-content: space-around; flex: 1;}
+.prob-item { display: flex; align-items: center; gap: 20px; padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+.prob-item:last-child { border-bottom: none; }
+.prob-icon { width: 56px; height: 56px; background: var(--orange-light); border-radius: 50%; color: var(--orange-main); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.prob-text { font-size: clamp(16px, 2vmin, 20px); font-weight: 600; color: var(--text-dark); line-height: 1.4; }
+
+.s2-right-col { display: flex; flex-direction: column; gap: 16px; height: 100%; justify-content: stretch; position: relative;}
+.s2-right-col .card { flex: 1.2; padding: 20px; display: flex; flex-direction: column;}
+.cat-pic-card { 
+  flex: 0.8; border-radius: var(--r-card); overflow: hidden; position: relative;
+  /* Updated to a very clear, cute cat face */
+  background-image: url('https://images.unsplash.com/photo-1543852786-1cf6624b9987?auto=format&fit=crop&w=800&q=80');
+  background-size: cover; background-position: center 30%; box-shadow: var(--sh-soft);
+  border: 1px solid rgba(255,255,255,0.6);
+}
+.cat-pic-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(44,38,33,0.8), transparent); padding: 30px 20px 20px; color: white; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 16px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);}
+
+/* ═══════════════════════════════
+S3 — THE SOLUTION (WARM GLOW BACKGROUND & ORGANIZED)
+═══════════════════════════════ */
+#s3 .s-grid { grid-template-columns: 0.9fr 1.1fr; align-items: center; max-width: 1100px;}
+
+.product-wow { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+/* The Warm Glow Pedestal Background */
+.bottle-pedestal {
+  background: linear-gradient(145deg, #FFFDF8, #FFF5D1);
+  border-radius: 40px; padding: 40px 60px 30px;
+  border: 1px solid #FFE066;
+  box-shadow: 0 20px 50px rgba(255, 140, 0, 0.15), inset 0 0 20px #FFFFFF;
+  display: flex; flex-direction: column; align-items: center;
+  position: relative; z-index: 1; width: 85%;
+}
+.glow-orb { position: absolute; width: 250px; height: 250px; top: 20%; left: 50%; transform: translateX(-50%); border-radius: 50%; filter: blur(50px); animation: pulse-glow 5s ease-in-out infinite alternate; z-index: 0; opacity: 0.8; background: radial-gradient(circle, #FF8A65 0%, #FFCF23 40%, transparent 70%); }
+@keyframes pulse-glow { 0% {transform: translateX(-50%) scale(1); opacity: 0.6;} 100% {transform: translateX(-50%) scale(1.1); opacity: 0.9;} }
+
+.premium-bottle { position: relative; z-index: 2; width: 160px; height: 240px; background: linear-gradient(135deg, #FFD54F, #FFB300); border-radius: 30px; box-shadow: inset -10px 0 20px rgba(0,0,0,0.1), inset 10px 0 20px rgba(255,255,255,0.6), 0 20px 40px rgba(0,0,0,0.15); display: flex; flex-direction: column; align-items: center; padding: 24px 16px; animation: float-can 5s ease-in-out infinite; margin-bottom: 20px;}
+.premium-bottle::after { content:''; position: absolute; top: 5%; left: 10%; width: 20%; height: 90%; background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0) 100%); border-radius: 50px; pointer-events: none;}
+.premium-lid { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); width: 85%; height: 24px; background: repeating-linear-gradient(90deg, #E5B200, #E5B200 4px, #C09500 4px, #C09500 8px); border-radius: 8px; box-shadow: inset 0 -4px 8px rgba(0,0,0,0.2), 0 4px 8px rgba(0,0,0,0.1);}
+.label { background: #FFFDF8; width: 100%; border-radius: 12px; padding: 20px 8px; text-align: center; margin-top: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative; z-index: 2; border: 1px solid #F0EEEA;}
+.l-tit { font-family: 'Nunito', sans-serif; font-size: 24px; font-weight: 900; line-height: 1; color: var(--text-dark); }
+.l-sub { font-size: 10px; color: var(--text-gray); margin-top: 4px; font-weight: 800; letter-spacing: 1px; }
+
+/* 3D CSS Pills floating around bottle */
+.css-pill { position: absolute; width: 16px; height: 36px; border-radius: 16px; background: linear-gradient(180deg, #FFFFFF 50%, #FF8A65 50%); box-shadow: inset -3px 0 5px rgba(0,0,0,0.1), 0 5px 15px rgba(0,0,0,0.15); z-index: 2; }
+.cp-1 { top: 15%; right: 10%; transform: rotate(30deg); animation: float 4s infinite reverse; }
+.cp-2 { bottom: 30%; left: 10%; transform: rotate(-45deg); animation: float 6s infinite; background: linear-gradient(180deg, #FFFFFF 50%, #FFCF23 50%);}
+
+/* Badges neatly organized under bottle */
+.badge-group { display: flex; gap: 12px; justify-content: center; z-index: 2; position: relative;}
+.badge-group .float-badge { background: white; padding: 8px 16px; border-radius: 30px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 13px; box-shadow: var(--sh-soft); display: flex; gap: 8px; align-items: center; color: var(--text-dark); border: 1px solid rgba(0,0,0,0.03);}
+
+/* Feature Grid */
+.feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(12px, 2vw, 16px); width: 100%;}
+.feat-card { background: white; padding: clamp(16px, 2vmin, 20px); border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 12px; border-top: 4px solid;}
+.fc-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+.fc-title { font-family: 'Nunito', sans-serif; font-size: clamp(15px, 2vmin, 18px); font-weight: 900; color: var(--text-dark); line-height: 1.2;}
+.fc-desc { font-size: clamp(12px, 1.8vmin, 14px); color: var(--text-gray); font-weight: 600; line-height: 1.4;}
+.fc-1 { border-color: var(--yellow-main); } .fc-1 .fc-icon { background: var(--yellow-light); color: #B38600; }
+.fc-2 { border-color: var(--green-main); } .fc-2 .fc-icon { background: var(--green-light); color: #2D8A46; }
+.fc-3 { border-color: var(--blue-main); } .fc-3 .fc-icon { background: var(--blue-light); color: #228CBF; }
+.fc-4 { border-color: var(--orange-main); } .fc-4 .fc-icon { background: var(--orange-light); color: #C25633; }
+
+/* ═══════════════════════════════
+S4 — MARKET
+═══════════════════════════════ */
+#s4 .s-grid { grid-template-columns: 0.9fr 1.1fr; max-width: 1100px; }
+#s4 .stats-grid { display: grid; grid-template-rows: repeat(3, 1fr); gap: clamp(12px, 2vh, 16px); height: 100%; }
+#s4 .stat-card { background: white; border-radius: 20px; padding: clamp(16px, 2vh, 20px) 24px; display: flex; align-items: center; gap: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); position: relative; overflow: hidden;}
+#s4 .stat-card::before { content:''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--yellow-main); border-radius: 6px 0 0 6px;}
+#s4 .stat-card:hover { transform: translateY(-5px); }
+#s4 .st-icon { width: 64px; height: 64px; background: var(--yellow-light); border-radius: 16px; color: #B38600; }
+#s4 .st-val { font-family: 'Nunito', sans-serif; font-size: clamp(24px, 3.5vmin, 32px); font-weight: 900; color: var(--text-dark); line-height: 1; margin-bottom: 4px;}
+#s4 .st-lbl { font-size: clamp(14px, 2vmin, 16px); color: var(--text-gray); font-weight: 700; }
+.data-source { font-size: 11px; color: var(--text-light); text-align: right; margin-top: 8px; font-style: italic; }
+
+/* ═══════════════════════════════
+S5 — COMPETITIVE (FIXED TABLE SPACING)
+═══════════════════════════════ */
+#s5 .card { max-width: 1000px; margin: 0 auto; padding: 0; overflow: hidden; border: none; box-shadow: var(--sh-float); } 
+#s5 table { width: 100%; border-collapse: collapse; background: white; table-layout: fixed; height: 100%;} 
+#s5 th { font-family: 'Nunito', sans-serif; font-size: clamp(14px, 1.8vmin, 16px); font-weight: 800; padding: clamp(16px, 2vh, 24px) 12px; text-align: center; border-bottom: 2px solid #F0EEEA; color: var(--text-gray); }
+#s5 th:first-child { text-align: left; padding-left: 32px; width: 45%; }
+#s5 .th-core { background: var(--yellow-main); color: var(--text-dark); font-size: clamp(16px, 2.2vmin, 20px); position: relative;}
+#s5 .th-core::after { content: 'OUR PRODUCT'; position: absolute; top: 6px; left: 50%; transform: translateX(-50%); font-size: 9px; letter-spacing: 1px; color: rgba(0,0,0,0.5); }
+#s5 td { padding: clamp(16px, 2.5vh, 32px) 12px; font-size: clamp(13px, 1.8vmin, 15px); color: var(--text-gray); text-align: center; border-bottom: 1px solid #F0EEEA; font-weight: 600; line-height: 1.3; word-wrap: break-word;}
+#s5 td:first-child { text-align: left; padding-left: 32px; font-weight: 800; color: var(--text-dark); font-size: clamp(14px, 1.8vmin, 16px);}
+#s5 .td-core { background: #FFFDF0; border-left: 2px solid var(--yellow-main); border-right: 2px solid var(--yellow-main);}
+#s5 tr:last-child .td-core { border-bottom: 2px solid var(--yellow-main); border-radius: 0 0 16px 16px;}
+#s5 .ck { color: white; background: var(--green-main); width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 14px; font-weight: bold; box-shadow: 0 4px 10px rgba(52,168,83,0.3);}
+#s5 .cx { color: #D1CFCB; font-size: 18px; font-weight: bold;}
+
+/* ═══════════════════════════════
+S6 — BUSINESS MODEL
+═══════════════════════════════ */
+#s6 .s-grid { grid-template-columns: 1fr 1fr; max-width: 1100px; align-items: stretch; gap: 32px;}
+.b-cards-wrap { display: flex; flex-direction: column; gap: clamp(12px, 2vh, 16px); height: 100%;}
+#s6 .b-card { flex: 1; background: white; border-radius: 20px; padding: 20px 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); display: flex; align-items: center; gap: 20px; border: 1px solid rgba(0,0,0,0.02);}
+#s6 .b-icon { width: 48px; height: 48px; background: var(--yellow-light); border-radius: 12px; color: #B38600; display: flex; align-items: center; justify-content: center; flex-shrink: 0;}
+#s6 .b-text { flex: 1; }
+#s6 .b-text h3 { font-size: 12px; color: var(--text-gray); text-transform: uppercase; letter-spacing: 1px; font-weight: 800; margin-bottom: 2px; }
+#s6 .b-text p { font-family: 'Nunito', sans-serif; font-size: clamp(18px, 2.5vw, 22px); font-weight: 900; color: var(--text-dark); line-height: 1.2;}
+.b-sub { font-size: 12px; color: var(--text-gray); margin-top: 4px; line-height: 1.3; font-weight: 500;}
+
+#s6 .pricing-highlight { 
+  background: linear-gradient(135deg, var(--yellow-main), #FFB300); 
+  border-radius: 20px; padding: 20px 24px; display: flex; flex-direction: column; gap: 12px;
+  box-shadow: 0 8px 24px rgba(255, 207, 35, 0.3); border: 1px solid rgba(255,255,255,0.4);
+  margin-bottom: clamp(12px, 2vh, 16px);
+}
+#s6 .ph-title { font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.8; margin-bottom: 2px;}
+#s6 .ph-main { font-family: 'Nunito', sans-serif; font-size: clamp(18px, 2.5vw, 22px); font-weight: 900; line-height: 1.1; color: var(--text-dark);}
+#s6 .ph-prices { display: flex; gap: 12px; background: rgba(255,255,255,0.4); padding: 10px 16px; border-radius: 12px; justify-content: space-around;}
+#s6 .ph-pr-box { text-align: center; }
+#s6 .ph-pr-lbl { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: rgba(0,0,0,0.6); margin-bottom: 2px;}
+#s6 .ph-pr-val { font-family: 'Nunito', sans-serif; font-size: clamp(16px, 2vw, 20px); font-weight: 900; color: var(--text-dark);}
+
+/* ═══════════════════════════════
+S7 — TRACTION
+═══════════════════════════════ */
+#s7 .s-grid { grid-template-columns: 1.3fr 1fr; max-width: 1100px;}
+#s7 .metric-hero { display: flex; align-items: flex-end; gap: 16px; margin-bottom: 20px;}
+#s7 .mh-val { font-family: 'Nunito', sans-serif; font-size: clamp(48px, 7vmin, 64px); font-weight: 900; color: var(--text-dark); line-height: 1; letter-spacing: -1px;}
+#s7 .mh-lbl { font-size: 16px; color: var(--text-gray); font-weight: 700; padding-bottom: 6px;}
+#s7 .badge-up { display: inline-flex; align-items: center; gap: 8px; background: var(--green-light); color: var(--green-main); padding: 8px 16px; border-radius: 30px; font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 16px; box-shadow: 0 4px 10px rgba(52,168,83,0.1);}
+
+.solution-list { display: flex; flex-direction: column; gap: clamp(16px, 2.5vh, 24px); margin-top: 0; justify-content: center; height: 100%;}
+.sol-item { display: flex; align-items: center; gap: 16px; }
+.sol-icon { width: 40px; height: 40px; background: var(--green-main); border-radius: 50%; color: white; flex-shrink: 0;}
+.sol-text { font-size: clamp(16px, 2vmin, 20px); font-weight: 500; color: var(--text-gray); line-height: 1.3; }
+.sol-text strong { color: var(--text-dark); font-weight: 800; background: linear-gradient(120deg, transparent 0%, rgba(255,207,35,0.3) 100%); padding: 0 4px; border-radius: 4px;}
+
+/* ═══════════════════════════════
+S8 — ROADMAP (GRID FIX NO OVERLAP & PUSHED DOWN)
+═══════════════════════════════ */
+#s8 .sb { padding-top: 0; align-items: center; overflow: visible;}
+.timeline-grid { display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: 1fr auto 1fr; gap: clamp(10px, 1.5vw, 20px); width: 100%; max-width: 1200px; height: 100%; align-items: center; position: relative; z-index: 1; margin-top: 4vh;}
+
+.t-line-row { grid-column: 1 / -1; grid-row: 2; position: relative; height: 40px; display: flex; justify-content: space-between; align-items: center;}
+.t-continuous-line { position: absolute; left: 5%; right: 5%; height: 4px; background: linear-gradient(90deg, var(--yellow-main), var(--orange-main), var(--blue-main)); z-index: 0; opacity: 0.5;}
+.t-dot { width: 24px; height: 24px; border-radius: 50%; background: white; border: 6px solid; z-index: 1; position: relative; margin: 0 auto;}
+
+.rm-card { background: white; border-radius: 16px; padding: clamp(12px, 1.5vh, 16px); box-shadow: 0 4px 15px rgba(0,0,0,0.04); display: flex; flex-direction: column; justify-content: center; transition: transform 0.3s; border-top: 4px solid;}
+.rm-card:hover { transform: scale(1.05); box-shadow: var(--sh-float); z-index: 10;}
+
+.rm-yr { font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 900; color: var(--text-gray); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.rm-tit { font-family: 'Nunito', sans-serif; font-size: clamp(13px, 1.6vmin, 16px); font-weight: 900; color: var(--text-dark); line-height: 1.2; margin-bottom: 6px; }
+.rm-desc { font-size: 11px; color: var(--text-gray); line-height: 1.4; font-weight: 500; margin-bottom: auto;}
+.rm-budg { display: inline-flex; align-items: center; justify-content: center; background: var(--bg-main); padding: 4px 8px; border-radius: 6px; font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 900; color: var(--text-dark); margin-top: 8px;}
+
+/* Placement logic */
+.tc-1 { grid-column: 1; grid-row: 1; border-color: var(--yellow-main); align-self: end; margin-bottom: 10px;}
+.tc-2 { grid-column: 2; grid-row: 3; border-color: var(--orange-main); align-self: start; margin-top: 10px;}
+.tc-3 { grid-column: 3; grid-row: 1; border-color: var(--yellow-main); align-self: end; margin-bottom: 10px;}
+.tc-4 { grid-column: 4; grid-row: 3; border-color: var(--blue-main); align-self: start; margin-top: 10px;}
+.tc-5 { grid-column: 5; grid-row: 1; border-color: var(--green-main); align-self: end; margin-bottom: 10px;}
+
+.td-1 { border-color: var(--yellow-main); }
+.td-2 { border-color: var(--orange-main); }
+.td-3 { border-color: var(--yellow-main); }
+.td-4 { border-color: var(--blue-main); }
+.td-5 { border-color: var(--green-main); }
+
+/* ═══════════════════════════════
+S9 — FINANCIALS (2 CHARTS TO FILL SCREEN)
+═══════════════════════════════ */
+#s9 .s-grid { grid-template-columns: 1fr 1fr; max-width: 1200px; gap: 32px;}
+.fin-col { display: flex; flex-direction: column; gap: 16px; height: 100%;}
+.fin-card { flex: 1; background: white; border-radius: var(--r-card); padding: 20px; box-shadow: var(--sh-soft); display: flex; flex-direction: column; min-height: 0;}
+.fin-script { background: white; border-radius: 20px; padding: 20px; box-shadow: var(--sh-soft); border-left: 6px solid var(--yellow-main); font-size: clamp(13px, 1.8vmin, 15px); color: var(--text-gray); line-height: 1.5; flex-shrink: 0;}
+.fin-script strong { color: var(--text-dark); }
+.fin-script p { margin-bottom: 8px;} .fin-script p:last-child { margin-bottom: 0;}
+/* Use 100% height for charts so they stretch completely */
+.fin-card .ccw { flex: 1 1 auto; height: 100%; display: block; position: relative; min-height: 200px;} 
+
+/* ═══════════════════════════════
+S10 — THE ASK
+═══════════════════════════════ */
+#s10 .s-grid { grid-template-columns: 1fr 1fr; max-width: 1100px; }
+#s10 .ask-box { background: linear-gradient(145deg, #FFCF23, #FFB300); border-radius: var(--r-card); padding: clamp(32px, 5vmin, 48px); display: flex; flex-direction: column; justify-content: center; box-shadow: 0 15px 40px rgba(255, 207, 35, 0.3); position: relative; overflow: hidden;}
+#s10 .ask-box::before { content:''; position: absolute; top: -50%; right: -20%; width: 300px; height: 300px; border-radius: 50%; border: 30px solid rgba(255,255,255,0.1); }
+#s10 .a-lbl { font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; opacity: 0.8; color: var(--text-dark);}
+#s10 .a-val { font-family: 'Nunito', sans-serif; font-size: clamp(48px, 8vmin, 80px); font-weight: 900; line-height: 1; margin: 12px 0; letter-spacing: -1px; color: var(--text-dark);}
+#s10 .a-eq { font-size: 20px; font-weight: 700; margin-bottom: 24px; color: var(--text-dark);}
+#s10 .a-roi { background: white; padding: 12px 20px; border-radius: 16px; display: inline-flex; align-items: center; gap: 10px; font-weight: 900; font-size: 16px; color: var(--text-dark); box-shadow: 0 6px 15px rgba(0,0,0,0.05); }
+
+/* ═══════════════════════════════
+S11 — CLOSING (FIXED CONTACT OVERFLOW)
+═══════════════════════════════ */
+#s11 .sw { background: var(--text-dark); color: white; align-items: center; justify-content: center; text-align: center; padding: clamp(30px, 5vh, 60px);}
+#s11 .blob-1 { background: var(--yellow-main); opacity: 0.1; }
+#s11 h2 { font-size: clamp(32px, 5.5vmin, 56px); font-weight: 900; color: white; line-height: 1.15; max-width: 800px; margin-bottom: 32px; }
+#s11 h2 .highlight::after { background: var(--yellow-main); opacity: 0.4; }
+
+#s11 .pills { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 32px; width: 100%; max-width: 1000px;}
+#s11 .c-pill { background: rgba(255,255,255,0.08); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; padding: clamp(16px, 2.5vmin, 20px); display: flex; align-items: center; gap: 16px; flex: 1 1 250px; min-width: 250px; justify-content: flex-start;}
+#s11 .c-icon { width: 48px; height: 48px; background: var(--yellow-main); border-radius: 50%; color: var(--text-dark); flex-shrink: 0;}
+#s11 .c-txt { font-family: 'Nunito', sans-serif; font-size: clamp(16px, 2.5vw, 20px); font-weight: 800; color: white; text-align: left; line-height: 1.2;}
+
+.contact-box { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 24px; width: 100%; max-width: 900px; }
+.c-item { display: flex; align-items: center; gap: 10px; font-family: 'Nunito', sans-serif; font-size: clamp(14px, 1.8vw, 16px); font-weight: 600; color: rgba(255,255,255,0.8); flex: 1 1 auto; justify-content: center;}
+.c-item .c-svg { color: var(--yellow-main); }
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- ── GLOBAL BACKGROUND ── -->
+<div class="blob-container">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div class="pattern"></div>
+</div>
+
+<!-- ── S1 COVER (UPDATED YEAR) ── -->
+<div class="slide active" id="s1">
+<div class="sw">
+  <div class="badge">
+    <div class="icon-wrap sm"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 11c-1.6 0-3 1.3-3 3 0 2.2 2 4 3 5 1 1 3-2.8 3-5 0-1.7-1.4-3-3-3Z"/><path d="M6 7c-.6 0-1.1.4-1.1 1 0 1.3 1.2 2 2.1 2 1.3 0 2-1 2-2 0-.6-.5-1-1-1H6Z"/><path d="M18 7h-2c-.5 0-1 .4-1 1 0 1 .7 2 2 2 .9 0 2.1-.7 2.1-2 0-.6-.5-1-1.1-1Z"/><path d="M10 5c-.6 0-1 .4-1 1 0 1.3.7 2.5 2 2.5 1.3 0 2-1.2 2-2.5 0-.6-.4-1-1-1h-2Z"/></svg></div>
+    Investor Pitch Deck · 2026
+  </div>
+  <h1>The Future of Cat Health<br>Starts with <span>Prevention</span></h1>
+  <p class="sub">Daily prevention for long-term feline wellness. An investment in the fastest growing segment of the Thai pet market.</p>
+  <div class="foot">
+    <div class="logo">Paw<span>tique</span></div>
+    <div class="dv"></div>
+    <div class="meta">Confidential</div>
+  </div>
+</div>
+</div>
+
+<!-- ── S2 PROBLEM (FIXED BALANCE & READABLE LABELS & CUTE CAT) ── -->
+<div class="slide" id="s2">
+<div class="sw">
+  <div class="sh">
+    <div class="tag">The Problem</div>
+    <h2><span class="highlight">Cat Health Is Too Reactive</span></h2>
+  </div>
+  <div class="sb">
+    <div class="s-grid" style="grid-template-columns: 1fr 1fr;"> <!-- Balanced 50:50 -->
+      <!-- Left: Problem List -->
+      <div class="problem-card-wrapper">
+        <div class="prob-item">
+          <div class="prob-icon icon-wrap lg"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 5c.67 0 1.35.09 2 .26 1.78-2 5.03-2.84 6.42-2.26 1.4.58-.42 7-.42 7 .57 1.07 1 2.24 1 3.44C21 17.9 16.97 21 12 21s-9-3.1-9-7.56c0-1.25.5-2.4 1-3.44 0 0-1.89-6.42-.5-7 1.39-.58 4.69.23 6.5 2.23A9.04 9.04 0 0 1 12 5Z"/><path d="M8 14v.5"/><path d="M16 14v.5"/><path d="M11.25 16.25h1.5L12 17l-.75-.75Z"/></svg></div>
+          <div class="prob-text"><strong>Hairballs</strong> constantly disrupt daily cat life.</div>
+        </div>
+        <div class="prob-item">
+          <div class="prob-icon icon-wrap lg"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M12 8v4"></path><path d="M10 10h4"></path></svg></div>
+          <div class="prob-text"><strong>Kidney damage</strong> builds silently over time.</div>
+        </div>
+        <div class="prob-item" style="border-bottom: none;">
+          <div class="prob-icon icon-wrap lg"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M5 22h14"></path><path d="M5 2h14"></path><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"></path><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"></path></svg></div>
+          <div class="prob-text">Owners only react <strong>after symptoms worsen.</strong></div>
+        </div>
+      </div>
+      <!-- Right: Split Cards with Real Cute Cat -->
+      <div class="s2-right-col">
+        <div class="card">
+          <div class="chart-title">Top Health Concerns</div>
+          <div class="ccw"><canvas id="problemChart"></canvas></div>
+        </div>
+        <div class="cat-pic-card" style="flex: 0.8; border-radius: var(--r-card); overflow: hidden; position: relative; background-image: url('https://images.unsplash.com/photo-1543852786-1cf6624b9987?auto=format&fit=crop&w=800&q=80'); background-size: cover; background-position: center 20%; box-shadow: var(--sh-soft); border: 1px solid rgba(255,255,255,0.6);">
+          <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(44,38,33,0.8), transparent); padding: 30px 20px 20px; color: white; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 16px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Cat owners seek peace of mind.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ── S3 SOLUTION (PREMIUM 3D BOTTLE ORGANIZED) ── -->
+<div class="slide" id="s3">
+<div class="sw">
+  <div class="sh" style="padding-bottom: 0;">
+    <div class="tag">The Solution</div>
+    <h2><span class="highlight">CoreGut: Daily Prevention Built-In</span></h2>
+  </div>
+  <div class="sb">
+    <div class="s-grid">
+      
+      <div class="product-wow">
+        <div class="bottle-pedestal">
+          <div class="glow-orb"></div>
+          <div class="premium-bottle">
+            <div class="premium-lid"></div>
+            <div class="label">
+              <div class="l-tit">CoreGut</div>
+              <div class="l-sub">FOR CATS</div>
+            </div>
+          </div>
+          <!-- Organized Badges underneath bottle -->
+          <div class="badge-group">
+            <div class="float-badge">
+              <div class="icon-wrap sm" style="color: var(--yellow-main);"><svg class="svg-icon" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"></path><path d="m8.5 8.5 7 7"></path></svg></div>
+              250mg
+            </div>
+            <div class="float-badge">
+              <div class="icon-wrap sm" style="color: var(--yellow-main);"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg></div>
+              60 Caps
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div style="display: flex; flex-direction: column; justify-content: center; z-index: 2;">
+        <div class="feature-grid">
+          <div class="feat-card fc-1">
+            <div class="fc-icon icon-wrap sm"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"></path><path d="m9 12 2 2 4-4"></path></svg></div>
+            <div>
+              <div class="fc-title">Proactive Health</div>
+              <div class="fc-desc">Daily gut support before problems start.</div>
+            </div>
+          </div>
+          <div class="feat-card fc-2">
+            <div class="fc-icon icon-wrap sm"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div>
+            <div>
+              <div class="fc-title">Phosphate Binder</div>
+              <div class="fc-desc">Safely binds harmful dietary phosphates.</div>
+            </div>
+          </div>
+          <div class="feat-card fc-3">
+            <div class="fc-icon icon-wrap sm"><svg class="svg-icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div>
+            <div>
+              <div class="fc-title">Smooth Digestion</div>
+              <div class="fc-desc">Improves and regulates daily bowel movements.</div>
+            </div>
+          </div>
+          <div class="feat-card fc-4">
+            <div class="fc-icon icon-wrap sm"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg></div>
+            <div>
+              <div class="fc-title">Hairball Relief</div>
+              <div class="fc-desc">Reduces natural hairball buildup safely.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ── S4 MARKET ── -->
+<div class="slide" id="s4">
+<div class="sw">
+  <div class="sh">
+    <div class="tag">Market Opportunity</div>
+    <h2><span class="highlight">A Booming Wellness Market</span></h2>
+  </div>
+  <div class="sb">
+    <div class="s-grid">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="st-icon icon-wrap lg"><svg class="svg-icon" viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg></div>
+          <div><div class="st-val">11.9% CAGR</div><div class="st-lbl">Thai Pet Food Market</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="st-icon icon-wrap lg"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 5c.67 0 1.35.09 2 .26 1.78-2 5.03-2.84 6.42-2.26 1.4.58-.42 7-.42 7 .57 1.07 1 2.24 1 3.44C21 17.9 16.97 21 12 21s-9-3.1-9-7.56c0-1.25.5-2.4 1-3.44 0 0-1.89-6.42-.5-7 1.39-.58 4.69.23 6.5 2.23A9.04 9.04 0 0 1 12 5Z"/><path d="M8 14v.5"/><path d="M16 14v.5"/><path d="M11.25 16.25h1.5L12 17l-.75-.75Z"/></svg></div>
+          <div><div class="st-val">+28% YoY</div><div class="st-lbl">Cat Ownership Growth</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="st-icon icon-wrap lg"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></div>
+          <div><div class="st-val">32% Share</div><div class="st-lbl">E-Commerce Distribution</div></div>
+        </div>
+      </div>
+      <div class="card" style="display:flex; flex-direction:column; padding-bottom: 16px;">
+        <div class="chart-title">Thailand Pet Market Size (USD M)</div>
+        <div class="ccw" style="flex:1;"><canvas id="marketChart"></canvas></div>
+        <div class="data-source">*Source: Euromonitor International</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ── S5 COMPETITIVE ── -->
+<div class="slide" id="s5">
+<div class="sw">
+  <div class="sh">
+    <div class="tag">Competitive Edge</div>
+    <h2><span class="highlight">The Only All-in-One Solution</span></h2>
+  </div>
+  <div class="sb">
+    <div class="card" style="box-shadow: var(--sh-float); max-width: 1000px; padding: 0; display:flex;">
+      <table style="table-layout: fixed; width: 100%; height: 100%;">
+        <thead><tr>
+          <th style="width: 45%;">Feature / Benefit</th>
+          <th class="th-core" style="width: 27.5%;">⭐ CoreGut</th>
+          <th style="width: 27.5%;">Typical Competitor</th>
+        </tr></thead>
+        <tbody>
+          <tr><td>Daily Preventive Use</td><td class="td-core"><span class="ck icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24" style="width: 16px; height: 16px;"><polyline points="20 6 9 17 4 12"></polyline></svg></span></td><td><span class="cx">✕</span></td></tr>
+          <tr><td>Multi-Functional Support</td><td class="td-core"><span class="ck icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24" style="width: 16px; height: 16px;"><polyline points="20 6 9 17 4 12"></polyline></svg></span></td><td><span class="cx">✕</span></td></tr>
+          <tr><td>Gut-First Action</td><td class="td-core"><span class="ck icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24" style="width: 16px; height: 16px;"><polyline points="20 6 9 17 4 12"></polyline></svg></span></td><td><span class="cx">~</span></td></tr>
+          <tr><td>Reduces Kidney Risk</td><td class="td-core"><span class="ck icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24" style="width: 16px; height: 16px;"><polyline points="20 6 9 17 4 12"></polyline></svg></span></td><td><span class="cx">✕</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ── S6 BUSINESS MODEL ── -->
+<div class="slide" id="s6">
+<div class="sw">
+  <div class="sh">
+    <div class="tag">Business Model</div>
+    <h2><span class="highlight">Simple & Scalable</span></h2>
+  </div>
+  <div class="sb">
+    <div class="s-grid">
+      
+      <div class="b-cards-wrap">
+        <div class="pricing-highlight" style="background: linear-gradient(135deg, var(--yellow-main), #FFB300); border-radius: 20px; padding: 20px; box-shadow: 0 8px 24px rgba(255, 207, 35, 0.3);">
+          <div class="ph-text-group">
+            <div style="font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.8;">Pricing Strategy</div>
+            <div style="font-size: clamp(18px, 2.5vw, 22px); font-weight: 900; line-height: 1.1;">Premium Quality but Affordable</div>
+          </div>
+          <div style="display: flex; gap: 12px; background: rgba(255,255,255,0.4); padding: 10px 16px; border-radius: 12px; justify-content: space-around; margin-top:12px;">
+            <div style="text-align: center; border-right: 1px solid rgba(0,0,0,0.1); padding-right: 16px;">
+              <div style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: rgba(0,0,0,0.6);">Retail</div>
+              <div style="font-size: clamp(16px, 2vw, 20px); font-weight: 900; color: #2C2621;">1,099 THB</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: rgba(0,0,0,0.6);">Wholesale</div>
+              <div style="font-size: clamp(16px, 2vw, 20px); font-weight: 900; color: #2C2621;">760 THB</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="b-card" style="background: white; border-radius: 20px; padding: 16px 20px; display: flex; align-items: center; gap: 16px; flex: 1;">
+          <div class="b-icon icon-wrap lg" style="width: 48px; height: 48px; background: var(--yellow-light); border-radius: 12px; color: #B38600;"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
+          <div class="b-text" style="flex: 1;">
+            <h3 style="font-size: 12px; color: var(--text-gray); text-transform: uppercase; font-weight: 800;">Target Audience</h3>
+            <p style="font-size: clamp(18px, 2.5vw, 22px); font-weight: 900; line-height: 1.2;">Urban Cat Owners</p>
+            <div class="b-sub" style="font-size: 12px; color: var(--text-gray); margin-top: 4px; line-height: 1.3; font-weight: 500;">Focus on health-conscious owners seeking premium daily care.</div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 16px; flex: 1;">
+          <div class="b-card" style="background: white; border-radius: 20px; padding: 16px; display: flex; flex-direction: column; text-align: center; justify-content: center; flex: 1;">
+            <div class="b-icon icon-wrap lg" style="width: 40px; height: 40px; background: var(--yellow-light); border-radius: 12px; color: #B38600; margin: 0 auto 8px;"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg></div>
+            <div class="b-text"><h3 style="font-size: 11px; color: var(--text-gray); text-transform: uppercase; font-weight: 800;">D2C Channel</h3><p style="font-size: 16px; font-weight: 900;">Shopee</p><div class="b-sub" style="font-size: 11px; margin-top:2px;">Primary growth</div></div>
+          </div>
+          <div class="b-card" style="background: white; border-radius: 20px; padding: 16px; display: flex; flex-direction: column; text-align: center; justify-content: center; flex: 1;">
+            <div class="b-icon icon-wrap lg" style="width: 40px; height: 40px; background: var(--yellow-light); border-radius: 12px; color: #B38600; margin: 0 auto 8px;"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></div>
+            <div class="b-text"><h3 style="font-size: 11px; color: var(--text-gray); text-transform: uppercase; font-weight: 800;">B2B Channel</h3><p style="font-size: 16px; font-weight: 900;">Vet Clinics</p><div class="b-sub" style="font-size: 11px; margin-top:2px;">Builds trust</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="display:flex; flex-direction:column;">
+        <div class="chart-title">Target Sales Channel Split</div>
+        <div class="ccw" style="flex:1;"><canvas id="bizChart"></canvas></div>
+      </div>
+      
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ── S7 TRACTION ── -->
+<div class="slide" id="s7">
+<div class="sw">
+  <div class="sh">
+    <div class="tag">Year 1 Traction</div>
+    <h2><span class="highlight">Proven Market Demand</span></h2>
+  </div>
+  <div class="sb">
+    <div class="s-grid">
+      <div class="card" style="display:flex; flex-direction:column;">
+        <div style="display: flex; align-items: flex-end; gap: 16px; margin-bottom: 16px;">
+          <div><div style="font-size: 16px; color: var(--text-gray); font-weight: 700;">Total Units Sold (Y1)</div><div style="font-size: clamp(40px, 6vmin, 56px); font-weight: 900; line-height: 1;">1,400</div></div>
+          <div style="display: inline-flex; align-items: center; gap: 8px; background: var(--green-light); color: var(--green-main); padding: 8px 16px; border-radius: 30px; font-weight: 900; font-size: 16px;">
+            <div class="icon-wrap sm" style="width: 20px; height: 20px;"><svg class="svg-icon" viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg></div>
+            +300%
+          </div>
+        </div>
+        <div class="ccw" style="flex:1;"><canvas id="tractionChart"></canvas></div>
+      </div>
+      <div style="display: flex; flex-direction: column; justify-content: center;">
+        <div style="display: flex; flex-direction: column; gap: clamp(16px, 2.5vh, 24px);">
+          <div style="display: flex; align-items: center; gap: 16px;"><div class="icon-wrap sm" style="width: 40px; height: 40px; background: var(--green-main); border-radius: 50%; color: white;"><svg class="svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div style="font-size: clamp(16px, 2vmin, 20px); font-weight: 500;"><strong>1,400 units</strong> sold in Year 1.</div></div>
+          <div style="display: flex; align-items: center; gap: 16px;"><div class="icon-wrap sm" style="width: 40px; height: 40px; background: var(--green-main); border-radius: 50%; color: white;"><svg class="svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div style="font-size: clamp(16px, 2vmin, 20px); font-weight: 500;"><strong>300% volume growth</strong> Q1 to Q4.</div></div>
+          <div style="display: flex; align-items: center; gap: 16px;"><div class="icon-wrap sm" style="width: 40px; height: 40px; background: var(--green-main); border-radius: 50%; color: white;"><svg class="svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div style="font-size: clamp(16px, 2vmin, 20px); font-weight: 500;">Trusted by local <strong>Vet Clinics</strong>.</div></div>
+          <div style="display: flex; align-items: center; gap: 16px;"><div class="icon-wrap sm" style="width: 40px; height: 40px; background: var(--green-main); border-radius: 50%; color: white;"><svg class="svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div style="font-size: clamp(16px, 2vmin, 20px); font-weight: 500;">Viral <strong>Shark Tank</strong> national exposure.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ── S8 ROADMAP (FIXED OVERLAP & PUSHED DOWN) ── -->
+<div class="slide" id="s8">
+<div class="sw">
+  <div class="sh">
+    <div class="tag">5-Year Growth Plan</div>
+    <h2><span class="highlight">Path to Market Leadership</span></h2>
+  </div>
+  <div class="sb">
+    <div class="timeline-grid" style="display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: 1fr auto 1fr; gap: clamp(10px, 1.5vw, 20px); width: 100%; max-width: 1200px; height: 100%; align-items: center; position: relative; z-index: 1; margin-top: 4vh;">
+      <div style="grid-column: 1 / -1; grid-row: 2; position: relative; height: 40px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="position: absolute; left: 5%; right: 5%; height: 4px; background: linear-gradient(90deg, var(--yellow-main), var(--orange-main), var(--blue-main)); z-index: 0; opacity: 0.5;"></div>
+        <div style="width: 24px; height: 24px; border-radius: 50%; background: white; border: 6px solid var(--yellow-main); z-index: 1; position: relative; margin: 0 auto;"></div>
+        <div style="width: 24px; height: 24px; border-radius: 50%; background: white; border: 6px solid var(--orange-main); z-index: 1; position: relative; margin: 0 auto;"></div>
+        <div style="width: 24px; height: 24px; border-radius: 50%; background: white; border: 6px solid var(--yellow-main); z-index: 1; position: relative; margin: 0 auto;"></div>
+        <div style="width: 24px; height: 24px; border-radius: 50%; background: white; border: 6px solid var(--blue-main); z-index: 1; position: relative; margin: 0 auto;"></div>
+        <div style="width: 24px; height: 24px; border-radius: 50%; background: white; border: 6px solid var(--green-main); z-index: 1; position: relative; margin: 0 auto;"></div>
+      </div>
+      
+      <div style="grid-column: 1; grid-row: 1; border-color: var(--yellow-main); align-self: end; margin-bottom: 10px; background: white; border-radius: 16px; padding: clamp(12px, 1.5vh, 16px); box-shadow: 0 4px 15px rgba(0,0,0,0.04); display: flex; flex-direction: column; justify-content: center; transition: transform 0.3s; border-top: 4px solid;">
+        <div style="font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 900; color: var(--text-gray); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Year 1</div>
+        <div style="font-family: 'Nunito', sans-serif; font-size: clamp(13px, 1.6vmin, 16px); font-weight: 900; color: var(--text-dark); line-height: 1.2; margin-bottom: 6px;">Foundation</div>
+        <div style="font-size: 11px; color: var(--text-gray); line-height: 1.4; font-weight: 500; margin-bottom: auto;">Scale production, launch <strong>online store</strong>.</div>
+        <div style="display: inline-flex; align-items: center; justify-content: center; background: var(--bg-main); padding: 4px 8px; border-radius: 6px; font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 900; color: var(--text-dark); margin-top: 8px;">800K THB</div>
+      </div>
+
+      <div style="grid-column: 2; grid-row: 3; border-color: var(--orange-main); align-self: start; margin-top: 10px; background: white; border-radius: 16px; padding: clamp(12px, 1.5vh, 16px); box-shadow: 0 4px 15px rgba(0,0,0,0.04); display: flex; flex-direction: column; justify-content: center; transition: transform 0.3s; border-top: 4px solid;">
+        <div style="font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 900; color: var(--text-gray); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Year 2</div>
+        <div style="font-family: 'Nunito', sans-serif; font-size: clamp(13px, 1.6vmin, 16px); font-weight: 900; color: var(--text-dark); line-height: 1.2; margin-bottom: 6px;">Expansion</div>
+        <div style="font-size: 11px; color: var(--text-gray); line-height: 1.4; font-weight: 500; margin-bottom: auto;">Develop and launch <strong>'CoreCalm'</strong>.</div>
+        <div style="display: inline-flex; align-items: center; justify-content: center; background: var(--bg-main); padding: 4px 8px; border-radius: 6px; font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 900; color: var(--text-dark); margin-top: 8px;">1.2M THB</div>
+      </div>
+
+      <div style="grid-column: 3; grid-row: 1; border-color: var(--yellow-main); align-self: end; margin-bottom: 10px; background: white; border-radius: 16px; padding: clamp(12px, 1.5vh, 16px); box-shadow: 0 4px 15px rgba(0,0,0,0.04); display: flex; flex-direction: column; justify-content: center; transition: transform 0.3s; border-top: 4px solid;">
+        <div style="font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 900; color: var(--text-gray); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Year 3</div>
+        <div style="font-family: 'Nunito', sans-serif; font-size: clamp(13px, 1.6vmin, 16px); font-weight: 900; color: var(--text-dark); line-height: 1.2; margin-bottom: 6px;">Penetration</div>
+        <div style="font-size: 11px; color: var(--text-gray); line-height: 1.4; font-weight: 500; margin-bottom: auto;">Push into offline clinics.</div>
+        <div style="display: inline-flex; align-items: center; justify-content: center; background: var(--bg-main); padding: 4px 8px; border-radius: 6px; font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 900; color: var(--text-dark); margin-top: 8px;">500K THB</div>
+      </div>
+
+      <div style="grid-column: 4; grid-row: 3; border-color: var(--blue-main); align-self: start; margin-top: 10px; background: white; border-radius: 16px; padding: clamp(12px, 1.5vh, 16px); box-shadow: 0 4px 15px rgba(0,0,0,0.04); display: flex; flex-direction: column; justify-content: center; transition: transform 0.3s; border-top: 4px solid;">
+        <div style="font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 900; color: var(--text-gray); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Year 4</div>
+        <div style="font-family: 'Nunito', sans-serif; font-size: clamp(13px, 1.6vmin, 16px); font-weight: 900; color: var(--text-dark); line-height: 1.2; margin-bottom: 6px;">Brand Strength</div>
+        <div style="font-size: 11px; color: var(--text-gray); line-height: 1.4; font-weight: 500; margin-bottom: auto;">Major campaign & <strong>Subscription</strong>.</div>
+        <div style="display: inline-flex; align-items: center; justify-content: center; background: var(--bg-main); padding: 4px 8px; border-radius: 6px; font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 900; color: var(--text-dark); margin-top: 8px;">600K THB</div>
+      </div>
+
+      <div style="grid-column: 5; grid-row: 1; border-color: var(--green-main); align-self: end; margin-bottom: 10px; background: white; border-radius: 16px; padding: clamp(12px, 1.5vh, 16px); box-shadow: 0 4px 15px rgba(0,0,0,0.04); display: flex; flex-direction: column; justify-content: center; transition: transform 0.3s; border-top: 4px solid;">
+        <div style="font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 900; color: var(--text-gray); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Year 5</div>
+        <div style="font-family: 'Nunito', sans-serif; font-size: clamp(13px, 1.6vmin, 16px); font-weight: 900; color: var(--text-dark); line-height: 1.2; margin-bottom: 6px;">Infrastructure</div>
+        <div style="font-size: 11px; color: var(--text-gray); line-height: 1.4; font-weight: 500; margin-bottom: auto;">Invest in <strong>own warehouse</strong>.</div>
+        <div style="display: inline-flex; align-items: center; justify-content: center; background: var(--bg-main); padding: 4px 8px; border-radius: 6px; font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 900; color: var(--text-dark); margin-top: 8px;">665K THB</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ── S9 FINANCIALS (TWO CHARTS & FULL SCRIPT AS REQUESTED) ── -->
+<div class="slide" id="s9">
+<div class="sw">
+  <div class="sh">
+    <div class="tag">Financial Projections</div>
+    <h2><span class="highlight">Expanding Margins at Scale</span></h2>
+  </div>
+  <div class="sb">
+    <div class="s-grid" style="grid-template-columns: 1fr 1fr; max-width: 1200px; gap: 32px;">
+      
+      <!-- Left: Revenue Growth Chart & Script -->
+      <div style="display: flex; flex-direction: column; gap: 16px; height: 100%;">
+        <div class="card" style="flex: 1; padding: 20px; display: flex; flex-direction: column; min-height: 0;">
+          <div class="chart-title">Revenue Growth (THB)</div>
+          <div class="ccw" style="flex: 1 1 auto; height: 100%; display: block; position: relative; min-height: 200px;"><canvas id="financialChart"></canvas></div>
+        </div>
+        <div style="background: white; border-radius: 20px; padding: 20px; box-shadow: var(--sh-soft); border-left: 6px solid var(--yellow-main); font-size: clamp(13px, 1.8vmin, 15px); color: var(--text-gray); line-height: 1.5; flex-shrink: 0;">
+          <p style="margin-bottom: 8px;"><strong style="color: var(--text-dark);">This chart shows how our revenue grows steadily over time.</strong></p>
+          <p>In Year 1, revenue comes only from CoreGut. Starting from Year 2, CoreCalm is launched and becomes another important source of income.</p>
+        </div>
+      </div>
+      
+      <!-- Right: EBIT Margin Bar Chart & Script -->
+      <div style="display: flex; flex-direction: column; gap: 16px; height: 100%;">
+        <div class="card" style="flex: 1; padding: 20px; display: flex; flex-direction: column; min-height: 0;">
+          <div class="chart-title">Profitability & Scalability Overview</div>
+          <div class="ccw" style="flex: 1 1 auto; height: 100%; display: block; position: relative; min-height: 200px;"><canvas id="marginChart"></canvas></div>
+        </div>
+        <div style="background: white; border-radius: 20px; padding: 20px; box-shadow: var(--sh-soft); border-left: 6px solid var(--green-main); font-size: clamp(13px, 1.8vmin, 15px); color: var(--text-gray); line-height: 1.5; flex-shrink: 0;">
+          <p style="margin-bottom: 8px;"><strong style="color: var(--text-dark);">This slide shows our financial projection.</strong></p>
+          <p>Our revenue grows steadily... Our EBIT margin grows from about <strong style="color: var(--text-dark);">17% in Year 1</strong> to around <strong style="color: var(--text-dark);">29% in Year 5</strong>. This shows our business becomes more efficient as we scale.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ── S10 THE ASK ── -->
+<div class="slide" id="s10">
+<div class="sw">
+  <div class="sh">
+    <div class="tag">The Offer</div>
+    <h2><span class="highlight">Funding Request</span></h2>
+  </div>
+  <div class="sb">
+    <div class="s-grid">
+      <div style="background: linear-gradient(145deg, #FFCF23, #FFB300); border-radius: var(--r-card); padding: clamp(32px, 5vmin, 48px); display: flex; flex-direction: column; justify-content: center; box-shadow: 0 15px 40px rgba(255, 207, 35, 0.3); position: relative; overflow: hidden;">
+        <div style="font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; opacity: 0.8; color: var(--text-dark);">Investment Ask</div>
+        <div style="font-family: 'Nunito', sans-serif; font-size: clamp(48px, 8vmin, 80px); font-weight: 900; line-height: 1; margin: 12px 0; letter-spacing: -1px; color: var(--text-dark);">2.7M <span style="font-size:0.4em; opacity: 0.8;">THB</span></div>
+        <div style="font-size: 20px; font-weight: 700; margin-bottom: 24px; color: var(--text-dark);">For <strong>15% Equity</strong></div>
+        <div style="background: white; padding: 12px 20px; border-radius: 16px; display: inline-flex; align-items: center; gap: 10px; font-weight: 900; font-size: 16px; color: var(--text-dark); box-shadow: 0 6px 15px rgba(0,0,0,0.05); align-self: flex-start;">
+          <div class="icon-wrap sm"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
+          Target: 3x ROI in 5 Years
+        </div>
+      </div>
+      <div class="card" style="display:flex; flex-direction:column;">
+        <div class="chart-title">Use of Funds Allocation</div>
+        <div class="ccw" style="flex:1;"><canvas id="fundsChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ── S11 CLOSING (FIXED CONTACT INFO LAYOUT) ── -->
+<div class="slide" id="s11">
+<div class="sw" style="background: var(--text-dark); color: white; align-items: center; justify-content: center; text-align: center; padding: clamp(20px, 4vh, 40px);">
+  <div class="blob-container"><div class="blob blob-1" style="background: var(--yellow-main); opacity: 0.1; width: 100vw; height: 100vw;"></div></div>
+  <div style="font-size: clamp(32px, 5.5vmin, 56px); font-weight: 900; line-height: 1.15; max-width: 800px; margin-bottom: 32px; position:relative; z-index:2;">Join the Wave of <span style="color:var(--yellow-main)">Preventive Care</span></div>
+  
+  <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 32px; width: 100%; max-width: 1000px; position:relative; z-index:2;">
+    <div style="background: rgba(255,255,255,0.08); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; padding: clamp(16px, 2.5vmin, 20px); display: flex; align-items: center; gap: 16px; flex: 1 1 250px; min-width: 250px; justify-content: flex-start;">
+      <div class="icon-wrap lg" style="width: 48px; height: 48px; background: var(--yellow-main); border-radius: 50%; color: var(--text-dark); flex-shrink: 0;"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 11c-1.6 0-3 1.3-3 3 0 2.2 2 4 3 5 1 1 3-2.8 3-5 0-1.7-1.4-3-3-3Z"/><path d="M6 7c-.6 0-1.1.4-1.1 1 0 1.3 1.2 2 2.1 2 1.3 0 2-1 2-2 0-.6-.5-1-1-1H6Z"/><path d="M18 7h-2c-.5 0-1 .4-1 1 0 1 .7 2 2 2 .9 0 2.1-.7 2.1-2 0-.6-.5-1-1.1-1Z"/><path d="M10 5c-.6 0-1 .4-1 1 0 1.3.7 2.5 2 2.5 1.3 0 2-1.2 2-2.5 0-.6-.4-1-1-1h-2Z"/></svg></div>
+      <div style="font-family: 'Nunito', sans-serif; font-size: clamp(16px, 2.5vw, 20px); font-weight: 800; color: white; text-align: left; line-height: 1.2;">Ownership Booming</div>
+    </div>
+    <div style="background: rgba(255,255,255,0.08); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; padding: clamp(16px, 2.5vmin, 20px); display: flex; align-items: center; gap: 16px; flex: 1 1 250px; min-width: 250px; justify-content: flex-start;">
+      <div class="icon-wrap lg" style="width: 48px; height: 48px; background: var(--yellow-main); border-radius: 50%; color: var(--text-dark); flex-shrink: 0;"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div>
+      <div style="font-family: 'Nunito', sans-serif; font-size: clamp(16px, 2.5vw, 20px); font-weight: 800; color: white; text-align: left; line-height: 1.2;">Prevention is Standard</div>
+    </div>
+    <div style="background: rgba(255,255,255,0.08); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; padding: clamp(16px, 2.5vmin, 20px); display: flex; align-items: center; gap: 16px; flex: 1 1 250px; min-width: 250px; justify-content: flex-start;">
+      <div class="icon-wrap lg" style="width: 48px; height: 48px; background: var(--yellow-main); border-radius: 50%; color: var(--text-dark); flex-shrink: 0;"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path></svg></div>
+      <div style="font-family: 'Nunito', sans-serif; font-size: clamp(16px, 2.5vw, 20px); font-weight: 800; color: white; text-align: left; line-height: 1.2;">Ready to Scale</div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 24px; width: 100%; max-width: 800px; position:relative; z-index:2;">
+    <div style="display: flex; align-items: center; gap: 10px; font-family: 'Nunito', sans-serif; font-size: clamp(14px, 1.8vw, 16px); font-weight: 600; color: rgba(255,255,255,0.8); justify-content: center;">
+      <div class="icon-wrap sm" style="color: var(--yellow-main);"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg></div>
+      hello@pawtique.co.th
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; font-family: 'Nunito', sans-serif; font-size: clamp(14px, 1.8vw, 16px); font-weight: 600; color: rgba(255,255,255,0.8); justify-content: center;">
+      <div class="icon-wrap sm" style="color: var(--yellow-main);"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></div>
+      www.pawtique.co.th
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; font-family: 'Nunito', sans-serif; font-size: clamp(14px, 1.8vw, 16px); font-weight: 600; color: rgba(255,255,255,0.8); justify-content: center;">
+      <div class="icon-wrap sm" style="color: var(--yellow-main);"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></div>
+      +66 81 234 5678
+    </div>
+  </div>
+
+</div>
+</div>
+
+</div><!-- /deck -->
+
+<div class="nav-bar" id="nb"></div>
+<button class="arr p" onclick="go(cur-1)">
+  <div class="icon-wrap sm"><svg class="svg-icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></div>
+</button>
+<button class="arr n" onclick="go(cur+1)">
+  <div class="icon-wrap sm"><svg class="svg-icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></div>
+</button>
+<div class="pager" id="pg">1 / 11</div>
+
+<script>
+// DataLabels Plugin config
+Chart.register(ChartDataLabels);
+Chart.defaults.set('plugins.datalabels', {
+  color: '#2C2621',
+  font: { family: 'Nunito', weight: '900', size: 14 },
+  align: 'center', anchor: 'center'
+});
+
+let cur=0;
+const slides=document.querySelectorAll('.slide');
+const nb=document.getElementById('nb');
+const pg=document.getElementById('pg');
+
+slides.forEach((_,i)=>{
+  const d=document.createElement('button');
+  d.className='nd'+(i===0?' on':'');
+  d.onclick=()=>go(i);
+  nb.appendChild(d);
+});
+
+function go(n){
+  n=((n%slides.length)+slides.length)%slides.length;
+  slides[cur].classList.remove('active');
+  slides[cur].classList.add('exit');
+  const old=cur;
+  setTimeout(()=>slides[old].classList.remove('exit'),400);
+  cur=n;
+  slides[cur].classList.add('active');
+  document.querySelectorAll('.nd').forEach((d,i)=>d.classList.toggle('on',i===cur));
+  pg.textContent=(cur+1)+' / '+slides.length;
+  
+  if(cur===1&&!window._p){requestAnimationFrame(()=>{drawProblem();window._p=1});}
+  if(cur===3&&!window._m){requestAnimationFrame(()=>{drawM();window._m=1});}
+  if(cur===5&&!window._b){requestAnimationFrame(()=>{drawBiz();window._b=1});}
+  if(cur===6&&!window._t){requestAnimationFrame(()=>{drawT();window._t=1});}
+  if(cur===8&&!window._f){requestAnimationFrame(()=>{drawF();window._f=1});}
+  if(cur===9&&!window._u){requestAnimationFrame(()=>{drawFunds();window._u=1});}
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown')go(cur+1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(cur-1);
+});
+
+const OPTS={
+  responsive:true, maintainAspectRatio:false, 
+  animation:{duration:800, easing:'easeOutQuart'},
+  layout: { padding: {top: 25, left: 10, right: 10, bottom: 10} }
+};
+
+function drawProblem(){
+  new Chart(document.getElementById('problemChart'),{
+    type:'doughnut',
+    data:{
+      labels:['Hairballs', 'Kidney Risk', 'Constipation', 'Other'],
+      datasets:[{
+        data:[45, 30, 15, 10],
+        backgroundColor:['#FFCF23', '#34A853', '#FF8A65', '#E1F5FE'],
+        borderWidth: 4, borderColor: '#FFFFFF', hoverOffset: 6
+      }]
+    },
+    options:{...OPTS,
+      cutout: '60%',
+      plugins:{
+        legend:{display:true,position:'right',labels:{color:'#7A726A',font:{size:13,weight:'700', family:'Nunito'},padding: 16, boxWidth: 12}},
+        datalabels: { color: '#2C2621', formatter: (val) => val + '%' }
+      }
+    }
+  });
+}
+
+function drawM(){
+  new Chart(document.getElementById('marketChart'),{
+    type:'bar',
+    data:{
+      labels:['2025','2026','2027','2028','2029','2030'],
+      datasets:[{
+        data:[1020,1141,1277,1428,1598,1790],
+        backgroundColor:['#FFF2BA','#FFE066','#FFCF23','#E5B800','#CC9F00','#A68000'],
+        borderRadius:6,borderSkipped:false
+      }]
+    },
+    options:{...OPTS,
+      plugins:{legend:{display:false}, datalabels: { align: 'top', anchor: 'end', formatter: (v) => v } },
+      scales:{
+        y:{beginAtZero:false,min:800,grid:{color:'#F0EEEA'},ticks:{color:'#B0A9A3',font:{size:12},callback:v=>`$${v}M`}},
+        x:{grid:{display:false},ticks:{color:'#7A726A',font:{size:13,weight:'700'}}}
+      }
+    }
+  });
+}
+
+function drawBiz(){
+  new Chart(document.getElementById('bizChart'),{
+    type:'bar',
+    data:{
+      labels:['Online (D2C)', 'Vet Clinics'],
+      datasets:[{
+        label: 'Volume',
+        data:[60, 40],
+        backgroundColor:['#FFCF23', '#4FC3F7'],
+        borderRadius:12,borderSkipped:false, barThickness: 30
+      }]
+    },
+    options:{...OPTS,
+      indexAxis: 'y',
+      plugins:{ legend:{display:false}, datalabels: { align: 'right', anchor: 'end', formatter: (v)=> v + '%' } },
+      scales:{
+        x:{beginAtZero:true, max: 100, grid:{color:'#F0EEEA'},ticks:{color:'#B0A9A3',font:{size:12},callback:v=>`${v}%`}},
+        y:{grid:{display:false},ticks:{color:'#7A726A',font:{size:13,weight:'700'}}}
+      }
+    }
+  });
+}
+
+function drawT(){
+  new Chart(document.getElementById('tractionChart'),{
+    type:'bar',
+    data:{
+      labels:['Q1','Q2','Q3','Q4'],
+      datasets:[{
+        data:[150,250,400,600],
+        backgroundColor:['#FFF2BA','#FFE066','#FFCF23','#E5B800'],
+        borderRadius:10,borderSkipped:false
+      }]
+    },
+    options:{...OPTS,
+      plugins:{legend:{display:false}, datalabels: { align: 'top', anchor: 'end' }},
+      scales:{
+        y:{beginAtZero:true,grid:{color:'#F0EEEA'},ticks:{color:'#B0A9A3',font:{size:12}}},
+        x:{grid:{display:false},ticks:{color:'#7A726A',font:{size:14,weight:'800'}}}
+      }
+    }
+  });
+}
+
+function drawF(){
+  new Chart(document.getElementById('financialChart'),{
+    type:'bar',
+    data:{
+      labels:['Year 1','Year 2','Year 3','Year 4','Year 5'],
+      datasets:[
+        {type:'line',label:'Total Revenue',data:[1921400,4745160,7265850,9868300,12836700], borderColor:'#FF8A65',borderWidth:3, pointBackgroundColor:'#FF8A65',pointRadius:5, order:1},
+        {type:'bar',label:'CoreGut',data:[1921400,2845160,4065850,5268300,6736700], backgroundColor:'#4FC3F7', borderRadius:4, stack:'Stack 0', order:2},
+        {type:'bar',label:'CoreCalm',data:[0,1900000,3200000,4600000,6100000], backgroundColor:'#B0A9A3', borderRadius:4, stack:'Stack 0', order:3}
+      ]
+    },
+    options:{...OPTS,
+      plugins:{
+        legend:{display:true,position:'top',labels:{color:'#7A726A',font:{size:12,weight:'700', family:'Nunito'},boxWidth:10}},
+        datalabels: { align: 'top', anchor: 'end', formatter: (v, ctx) => { if(ctx.datasetIndex === 0) return (v/1000000).toFixed(1) + 'M'; return null; } }
+      },
+      scales:{
+        y:{beginAtZero:true,grid:{color:'#F0EEEA'},ticks:{color:'#B0A9A3',font:{size:12},callback:v=>`${(v/1000000).toFixed(1)}M`}},
+        x:{grid:{display:false},ticks:{color:'#7A726A',font:{size:12,weight:'700'}}}
+      }
+    }
+  });
+
+  new Chart(document.getElementById('marginChart'),{
+    type:'bar',
+    data:{
+      labels:['Year 1','Year 2','Year 3','Year 4','Year 5'],
+      datasets:[
+        {label:'EBIT Margin %',data:[17.38, 23.64, 27.62, 28.70, 29.29], backgroundColor:'#34A853', borderRadius:8}
+      ]
+    },
+    options:{...OPTS,
+      plugins:{ legend:{display:false}, datalabels: { align: 'top', anchor: 'end', formatter: (v) => v + '%' } },
+      scales:{
+        y:{beginAtZero:true, max: 35, grid:{color:'#F0EEEA'},ticks:{color:'#B0A9A3',font:{size:12},callback:v=>`${v}%`}},
+        x:{grid:{display:false},ticks:{color:'#7A726A',font:{size:12,weight:'700'}}}
+      }
+    }
+  });
+}
+
+function drawFunds(){
+  new Chart(document.getElementById('fundsChart'),{
+    type:'pie',
+    data:{
+      labels:['Production', 'Marketing', 'Digital/Web', 'R&D', 'Working Capital'],
+      datasets:[{
+        data:[35, 25, 15, 15, 10],
+        backgroundColor:['#FFCF23', '#FF8A65', '#4FC3F7', '#34A853', '#E1F5FE'],
+        borderWidth: 3, borderColor: '#FFFFFF', hoverOffset: 6
+      }]
+    },
+    options:{...OPTS,
+      plugins:{
+        legend:{display:true,position:'right',labels:{color:'#7A726A',font:{size:13,weight:'700', family:'Nunito'},padding: 16, boxWidth:12}},
+        datalabels: { color: '#2C2621', font: {size: 13}, formatter: (v) => v + '%' }
+      }
+    }
+  });
+}
+</script>
+</body>
+</html>
+
+
+```
